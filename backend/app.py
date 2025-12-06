@@ -35,8 +35,19 @@ CORS(app)
 
 # -- Load Recipes & TF-IDF Search Setup --
 df = pd.read_csv("data/final_recipes.csv")
+
+# Combine processed_ingredients and ingredient_synonyms for better matching
+# Handle NaN values in ingredient_synonyms column and normalize
+df['ingredient_synonyms'] = df['ingredient_synonyms'].fillna('')
+# Replace commas with spaces in synonyms to ensure proper tokenization
+df['ingredient_synonyms'] = df['ingredient_synonyms'].astype(str).str.replace(',', ' ')
+# Combine both columns for comprehensive matching
+df['combined_ingredients'] = df['processed_ingredients'].astype(str) + ' ' + df['ingredient_synonyms'].astype(str)
+
+# Use combined ingredients for TF-IDF vectorization
+# This allows matching against both original ingredients and their synonyms
 vectorizer = TfidfVectorizer(stop_words='english')
-tfidf_matrix = vectorizer.fit_transform(df['processed_ingredients'])
+tfidf_matrix = vectorizer.fit_transform(df['combined_ingredients'])
 
 # -- 1. Recipe Search Endpoint --
 @app.route('/search', methods=['GET'])
