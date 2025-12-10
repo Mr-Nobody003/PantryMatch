@@ -1,0 +1,38 @@
+name: Upload Model to Release
+
+on:
+  workflow_dispatch:  # Manual trigger
+  push:
+    branches:
+      - main
+    paths:
+      - 'backend/models/ingredients_resnet18.pt'
+
+jobs:
+  upload:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          lfs: true
+
+      - name: Check if release exists
+        id: check_release
+        run: |
+          RELEASE=$(gh release view v1.0 2>/dev/null || echo "not-found")
+          echo "release=$RELEASE" >> $GITHUB_OUTPUT
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Create release if not exists
+        if: steps.check_release.outputs.release == 'not-found'
+        run: |
+          gh release create v1.0 --title "Model Release v1.0" --notes "Initial model release"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload model to release
+        run: |
+          gh release upload v1.0 backend/models/ingredients_resnet18.pt --clobber
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

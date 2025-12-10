@@ -3,6 +3,7 @@ Inference utilities for the trained ingredient classifier (ResNet18).
 
 Loads:
   backend/models/ingredients_resnet18.pt
+  Or downloads from GitHub releases if not found locally (Vercel)
 
 Provides:
   - load_model()
@@ -22,8 +23,10 @@ Usage example (from Python, after training):
 from __future__ import annotations
 
 import io
+import os
 from pathlib import Path
 from typing import List, Dict
+from urllib.request import urlretrieve
 
 import torch
 from PIL import Image
@@ -33,21 +36,53 @@ from torchvision import transforms, models
 MODELS_DIR = Path(__file__).resolve().parent / "models"
 MODEL_PATH = MODELS_DIR / "ingredients_resnet18.pt"
 
+# GitHub raw content URL for model download
+# Replace with your actual GitHub repo details
+GITHUB_MODEL_URL = "https://github.com/Mr-Nobody003/PantryMatch/releases/download/v1.0/ingredients_resnet18.pt"
+
+
+def download_model_from_github(url: str, dest_path: Path) -> None:
+    """
+    Download model from GitHub releases if it doesn't exist locally.
+    """
+    dest_path.parent.mkdir(parents=True, exist_ok=True)
+    print(f"Downloading model from {url}...")
+    try:
+        urlretrieve(url, dest_path)
+        print(f"Model downloaded successfully to {dest_path}")
+    except Exception as e:
+        raise FileNotFoundError(
+            f"Failed to download model from GitHub: {e}. "
+            f"Make sure the URL is correct and the release exists."
+        )
+
 
 def load_model():
     """
     Load the trained ResNet18 model and class names.
+    
+    If model doesn't exist locally, downloads from GitHub releases (Vercel only).
+    For local development, model must exist at backend/models/ingredients_resnet18.pt
 
     Returns:
       model: torch.nn.Module
       class_names: List[str]
       device: torch.device
     """
+    # If model doesn't exist, try to download from GitHub (only on Vercel/production)
     if not MODEL_PATH.exists():
-        raise FileNotFoundError(
-            f"Model file not found at {MODEL_PATH}. Train the model first using "
-            "python ml_train_ingredients_model.py"
-        )
+        # Check if running on Vercel (has VERCEL env var)
+        is_vercel = os.getenv("VERCEL") == "1"
+        
+        if is_vercel:
+            print(f"Model not found at {MODEL_PATH}. Attempting to download from GitHub...")
+            download_model_from_github(GITHUB_MODEL_URL, MODEL_PATH)
+        else:
+            raise FileNotFoundError(
+                f"Model file not found at {MODEL_PATH}. "
+                f"For local development, train the model first using: "
+                f"python ml_train_ingredients_model.py"
+            )
 
     checkpoint = torch.load(MODEL_PATH, map_location="cpu")
     class_names = checkpoint.get("class_names")
