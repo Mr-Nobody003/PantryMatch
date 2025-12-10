@@ -15,7 +15,7 @@ instance/
 
 # API Keys - DO NOT COMMIT
 backend/config.py
-
+backend/.env
 # IDE
 .vscode/
 .idea/
@@ -47,7 +47,7 @@ build/
 
 # Data files (if large)
 *.csv
-!backend/data/*.csv
+!backend/data/final_recipes.csv
 
 # Logs
 *.log

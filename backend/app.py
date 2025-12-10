@@ -1,5 +1,7 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
+from pathlib import Path
+from dotenv import load_dotenv
 import pandas as pd
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
@@ -9,6 +11,11 @@ import os
 import base64
 
 from ml_infer_ingredients import load_model, predict_ingredients_from_bytes
+
+# -- Load environment variables from .env file (local development only) --
+env_path = Path(__file__).resolve().parent / '.env'
+if env_path.exists():
+    load_dotenv(dotenv_path=env_path)
 
 # -- Import API Keys from config --
 try:
@@ -34,7 +41,10 @@ app = Flask(__name__)
 CORS(app)
 
 # -- Load Recipes & TF-IDF Search Setup --
-df = pd.read_csv("data/final_recipes.csv")
+# Use dynamic path resolution to work in both local and Vercel environments
+backend_dir = Path(__file__).resolve().parent
+data_file = backend_dir / "data" / "final_recipes.csv"
+df = pd.read_csv(data_file)
 
 # Combine processed_ingredients and ingredient_synonyms for better matching
 # Handle NaN values in ingredient_synonyms column and normalize
