@@ -368,3 +368,6 @@ def classify_image():
 # -- Run App --
 if __name__ == '__main__':
     app.run(debug=True)
+
+# For Vercel
+app = app

@@ -1,9 +1,9 @@
 """
 Vercel serverless handler for Flask app.
-Maps incoming requests to the Flask WSGI application.
 """
 from app import app
 
-def handler(request):
-    """Vercel Functions handler that wraps the Flask app."""
-    return app(request)
+# Vercel expects a handler that takes (request, context) or just works with WSGI
+def handler(environ, start_response):
+    """WSGI handler for Vercel"""
+    return app.wsgi_app(environ, start_response)
